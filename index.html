@@ -59,8 +59,10 @@
       var entryUrl = function () {
         var pw = password();
         if (!pw) return liveUrl;
-        var data = encodeURIComponent(JSON.stringify({ urls: [liveUrl], password: pw }));
-        return liveUrl.replace(/\/$/, "") + "/connect#" + data;
+        // sign in at the HTTP layer: the browser then sends these credentials
+        // automatically with every app request (page, files, live updates).
+        // password is alphanumerics+underscore only, safe unencoded.
+        return liveUrl.replace(/^https:\/\//, "https://opencode:" + pw + "@");
       };
       var refresh = function (auto) {
         manual.href = entryUrl();
