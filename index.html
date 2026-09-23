@@ -3,65 +3,76 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta http-equiv="refresh" content="5; url=https://black-mayfly-32.loca.lt" />
   <title>OpenCode</title>
-  <script>
-    // This page is a permanent bookmark. The live tunnel address changes when
-    // the tunnel restarts, so:
-    //   1. fetch url.txt with a cache-busting query -> always the newest address
-    //   2. if that fails, fall back to the address baked into this file
-    (function () {
-      var fallback = "https://black-mayfly-32.loca.lt";
-      var isTarget = function (s) {
-        return /^https:\/\/[a-z0-9\-]+\.(serveousercontent\.com|loca\.lt)\/?$/.test(s);
-      };
-      var go = function (u) { try { location.replace(u); } catch (e) {} };
-      var bust = "url.txt?cb=" + Date.now();
-      if (window.fetch) {
-        fetch(bust, { cache: "no-store", credentials: "omit" })
-          .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
-          .then(function (t) {
-            t = (t || "").trim();
-            go(isTarget(t) ? t : fallback);
-          })
-          .catch(function () { go(fallback); });
-      } else {
-        go(fallback);
-      }
-    })();
-  </script>
-  <noscript>
-    <meta http-equiv="refresh" content="0; url=https://black-mayfly-32.loca.lt" />
-  </noscript>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
            background: #0b0d10; color: #e6e6e6; display: flex; align-items: center;
-           justify-content: center; height: 100vh; margin: 0; text-align: center; }
-    a { color: #7cc4ff; }
+           justify-content: center; min-height: 100vh; margin: 0; text-align: center;
+           padding: 1.2rem; box-sizing: border-box; }
+    a.big { display: inline-block; margin-top: 1rem; padding: .9rem 1.6rem;
+            background: #1f6feb; color: #fff; border-radius: .6rem;
+            font-size: 1.1rem; text-decoration: none; }
     .muted { color: #8a919a; font-size: .9rem; margin-top: .8rem; }
+    #status { font-size: 1.05rem; }
+    #target { word-break: break-all; color: #7cc4ff; font-size: .85rem; }
   </style>
 </head>
 <body>
   <div>
-    <p>Opening your OpenCode session&hellip;</p>
-    <p><a id="manual" href="https://black-mayfly-32.loca.lt">Click here if you are not redirected.</a></p>
-    <p class="muted">First visit? The next page asks you to type an IP address &mdash; enter <b>34.226.211.195</b> once.</p>
+    <p id="status">Finding the live tunnel address&hellip;</p>
+    <p id="target"></p>
+    <p><a id="manual" class="big" href="https://black-mayfly-32.loca.lt">Open OpenCode</a></p>
+    <p class="muted">If the button does nothing for 10 seconds, tap it again.
+    First visit? The next page may ask for an IP &mdash; enter
+    <b>34.226.211.195</b> once.</p>
   </div>
   <script>
-    // keep the manual link usable even when the fetched address differs
+    // Permanent bookmark: the live tunnel address changes on restart.
+    // 1. fetch url.txt with cache-busting -> newest address (+ visible status)
+    // 2. fall back to the baked-in address if the fetch fails
+    // 3. auto-redirect; the big button always works by hand
     (function () {
-      var a = document.getElementById("manual");
+      var fallback = "https://black-mayfly-32.loca.lt";
+      var statusEl = document.getElementById("status");
+      var targetEl = document.getElementById("target");
+      var manual = document.getElementById("manual");
+      var isTarget = function (s) {
+        return /^https:\/\/[a-z0-9\-]+\.(serveousercontent\.com|loca\.lt)\/?$/.test(s);
+      };
+      var use = function (u, auto) {
+        manual.href = u;
+        targetEl.textContent = u;
+        if (auto) {
+          statusEl.textContent = "Opening your OpenCode session\u2026";
+          try { location.replace(u); } catch (e) {}
+          // if we are still here after 6 s, say so instead of sitting silent
+          setTimeout(function () {
+            statusEl.textContent = "Still here? Tap the blue button above.";
+          }, 6000);
+        } else {
+          statusEl.textContent = "Tap the blue button to continue.";
+        }
+      };
+      manual.addEventListener("click", function () {
+        statusEl.textContent = "Opening\u2026 if nothing loads, wait 20 seconds and tap again.";
+      });
       var bust = "url.txt?cb=" + Date.now();
-      if (window.fetch && a) {
+      if (window.fetch) {
+        statusEl.textContent = "Finding the live tunnel address\u2026";
         fetch(bust, { cache: "no-store", credentials: "omit" })
           .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
           .then(function (t) {
             t = (t || "").trim();
-            if (/^https:\/\/[a-z0-9\-]+\.(serveousercontent\.com|loca\.lt)\/?$/.test(t)) a.href = t;
+            use(isTarget(t) ? t : fallback, true);
           })
-          .catch(function () {});
+          .catch(function () { use(fallback, true); });
+      } else {
+        use(fallback, true);
       }
     })();
   </script>
+  <noscript>
+    <p><a class="big" href="https://black-mayfly-32.loca.lt">Open OpenCode (no JavaScript)</a></p>
+  </noscript>
 </body>
 </html>
