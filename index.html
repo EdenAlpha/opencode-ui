@@ -9,65 +9,102 @@
            background: #0b0d10; color: #e6e6e6; display: flex; align-items: center;
            justify-content: center; min-height: 100vh; margin: 0; text-align: center;
            padding: 1.2rem; box-sizing: border-box; }
-    a.big { display: inline-block; margin-top: 1rem; padding: .9rem 1.6rem;
-            background: #1f6feb; color: #fff; border-radius: .6rem;
-            font-size: 1.1rem; text-decoration: none; }
+    a.big, button.big { display: inline-block; margin-top: 1rem; padding: .9rem 1.6rem;
+            background: #1f6feb; color: #fff; border: none; border-radius: .6rem;
+            font-size: 1.1rem; text-decoration: none; cursor: pointer; }
     .muted { color: #8a919a; font-size: .9rem; margin-top: .8rem; }
     #status { font-size: 1.05rem; }
     #target { word-break: break-all; color: #7cc4ff; font-size: .85rem; }
+    #pwbox { margin-top: 1rem; }
+    #pw { width: 100%; max-width: 22rem; padding: .7rem; font-size: 1rem;
+          border-radius: .5rem; border: 1px solid #3a3f47; background: #16191e;
+          color: #e6e6e6; box-sizing: border-box; }
   </style>
 </head>
 <body>
   <div>
     <p id="status">Finding the live tunnel address&hellip;</p>
     <p id="target"></p>
+    <div id="pwbox" style="display:none">
+      <p class="muted">One-time setup: paste your OpenCode password so this page<br />can sign you in automatically from now on.</p>
+      <input id="pw" type="password" placeholder="Paste password, then tap Save" autocomplete="off" />
+      <br />
+      <button id="save" class="big">Save</button>
+    </div>
     <p><a id="manual" class="big" href="https://lovely-skunk-79.loca.lt">Open OpenCode</a></p>
     <p class="muted">If the button does nothing for 10 seconds, tap it again.
     First visit? The next page may ask for an IP &mdash; enter
     <b>34.226.211.195</b> once.</p>
   </div>
   <script>
-    // Permanent bookmark: the live tunnel address changes on restart.
-    // 1. fetch url.txt with cache-busting -> newest address (+ visible status)
-    // 2. fall back to the baked-in address if the fetch fails
-    // 3. auto-redirect; the big button always works by hand
+    // Permanent bookmark. The live tunnel address changes on restart, so this
+    // page reads url.txt fresh on every load. The password (if saved) lives
+    // ONLY in this browser's own storage - it is never sent anywhere except
+    // inside the tunnel's own login link, as a #fragment the server never sees.
     (function () {
       var fallback = "https://lovely-skunk-79.loca.lt";
       var statusEl = document.getElementById("status");
       var targetEl = document.getElementById("target");
       var manual = document.getElementById("manual");
+      var pwbox = document.getElementById("pwbox");
+      var pwInput = document.getElementById("pw");
+      var saveBtn = document.getElementById("save");
+      var liveUrl = fallback;
       var isTarget = function (s) {
         return /^https:\/\/[a-z0-9\-]+\.(serveousercontent\.com|loca\.lt)\/?$/.test(s);
       };
-      var use = function (u, auto) {
-        manual.href = u;
-        targetEl.textContent = u;
+      var password = function () {
+        try { return (localStorage.getItem("oc_pw") || "").trim(); } catch (e) { return ""; }
+      };
+      var entryUrl = function () {
+        var pw = password();
+        if (!pw) return liveUrl;
+        var data = encodeURIComponent(JSON.stringify({ urls: [liveUrl], password: pw }));
+        return liveUrl.replace(/\/$/, "") + "/connect#" + data;
+      };
+      var refresh = function (auto) {
+        manual.href = entryUrl();
+        targetEl.textContent = liveUrl;
+        if (!password()) {
+          pwbox.style.display = "";
+          statusEl.textContent = "Paste your password once, then tap Open OpenCode.";
+          if (auto) { /* stay: user must save first */ return; }
+        } else {
+          pwbox.style.display = "none";
+        }
         if (auto) {
           statusEl.textContent = "Opening your OpenCode session\u2026";
-          try { location.replace(u); } catch (e) {}
-          // if we are still here after 6 s, say so instead of sitting silent
+          try { location.replace(manual.href); } catch (e) {}
           setTimeout(function () {
             statusEl.textContent = "Still here? Tap the blue button above.";
           }, 6000);
         } else {
-          statusEl.textContent = "Tap the blue button to continue.";
+          statusEl.textContent = "Tap the blue button to continue signed in.";
         }
       };
+      saveBtn.addEventListener("click", function () {
+        var v = (pwInput.value || "").trim();
+        if (!v) { statusEl.textContent = "The password box is empty."; return; }
+        try { localStorage.setItem("oc_pw", v); } catch (e) {}
+        pwInput.value = "";
+        refresh(true);
+      });
       manual.addEventListener("click", function () {
+        manual.href = entryUrl();
         statusEl.textContent = "Opening\u2026 if nothing loads, wait 20 seconds and tap again.";
       });
       var bust = "url.txt?cb=" + Date.now();
       if (window.fetch) {
-        statusEl.textContent = "Finding the live tunnel address\u2026";
         fetch(bust, { cache: "no-store", credentials: "omit" })
           .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
           .then(function (t) {
             t = (t || "").trim();
-            use(isTarget(t) ? t : fallback, true);
+            liveUrl = isTarget(t) ? t : fallback;
+            refresh(true);
           })
-          .catch(function () { use(fallback, true); });
+          .catch(function () { refresh(true); });
       } else {
-        use(fallback, true);
+        refresh(true);
       }
     })();
   </script>
