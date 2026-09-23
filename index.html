@@ -3,17 +3,36 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta http-equiv="refresh" content="0; url=https://51a2273ba15b0d31-34-226-211-195.serveousercontent.com" />
+  <meta http-equiv="refresh" content="5; url=https://51a2273ba15b0d31-34-226-211-195.serveousercontent.com" />
   <title>OpenCode</title>
   <script>
-    // Send the browser to the live tunnel address. The target is rewritten
-    // automatically whenever the tunnel hands out a new address, so this
-    // bookmark itself never changes.
+    // This page is a permanent bookmark. The live tunnel address changes when
+    // the tunnel restarts, so:
+    //   1. fetch url.txt with a cache-busting query -> always the newest address
+    //   2. if that fails, fall back to the address baked into this file
     (function () {
-      var target = "https://51a2273ba15b0d31-34-226-211-195.serveousercontent.com";
-      try { location.replace(target); } catch (e) { /* fall through to the link below */ }
+      var fallback = "https://51a2273ba15b0d31-34-226-211-195.serveousercontent.com";
+      var isTarget = function (s) {
+        return /^https:\/\/[a-z0-9\-]+\.serveousercontent\.com\/?$/.test(s);
+      };
+      var go = function (u) { try { location.replace(u); } catch (e) {} };
+      var bust = "url.txt?cb=" + Date.now();
+      if (window.fetch) {
+        fetch(bust, { cache: "no-store", credentials: "omit" })
+          .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
+          .then(function (t) {
+            t = (t || "").trim();
+            go(isTarget(t) ? t : fallback);
+          })
+          .catch(function () { go(fallback); });
+      } else {
+        go(fallback);
+      }
     })();
   </script>
+  <noscript>
+    <meta http-equiv="refresh" content="0; url=https://51a2273ba15b0d31-34-226-211-195.serveousercontent.com" />
+  </noscript>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
            background: #0b0d10; color: #e6e6e6; display: flex; align-items: center;
@@ -25,8 +44,24 @@
 <body>
   <div>
     <p>Opening your OpenCode session&hellip;</p>
-    <p><a href="https://51a2273ba15b0d31-34-226-211-195.serveousercontent.com">Click here if you are not redirected.</a></p>
+    <p><a id="manual" href="https://51a2273ba15b0d31-34-226-211-195.serveousercontent.com">Click here if you are not redirected.</a></p>
     <p class="muted">If the next page shows a warning, choose &ldquo;Continue to Site&rdquo;.</p>
   </div>
+  <script>
+    // keep the manual link usable even when the fetched address differs
+    (function () {
+      var a = document.getElementById("manual");
+      var bust = "url.txt?cb=" + Date.now();
+      if (window.fetch && a) {
+        fetch(bust, { cache: "no-store", credentials: "omit" })
+          .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
+          .then(function (t) {
+            t = (t || "").trim();
+            if (/^https:\/\/[a-z0-9\-]+\.serveousercontent\.com\/?$/.test(t)) a.href = t;
+          })
+          .catch(function () {});
+      }
+    })();
+  </script>
 </body>
 </html>
