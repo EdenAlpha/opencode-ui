@@ -13,7 +13,7 @@
     (function () {
       var fallback = "https://eden-opencode-oc.loca.lt";
       var isTarget = function (s) {
-        return /^https:\/\/[a-z0-9\-]+\.serveousercontent\.com\/?$/.test(s);
+        return /^https:\/\/[a-z0-9\-]+\.(serveousercontent\.com|loca\.lt)\/?$/.test(s);
       };
       var go = function (u) { try { location.replace(u); } catch (e) {} };
       var bust = "url.txt?cb=" + Date.now();
@@ -45,7 +45,7 @@
   <div>
     <p>Opening your OpenCode session&hellip;</p>
     <p><a id="manual" href="https://eden-opencode-oc.loca.lt">Click here if you are not redirected.</a></p>
-    <p class="muted">If the next page shows a warning, choose &ldquo;Continue to Site&rdquo;.</p>
+    <p class="muted">First visit? The next page asks you to type an IP address &mdash; enter <b>34.226.211.195</b> once.</p>
   </div>
   <script>
     // keep the manual link usable even when the fetched address differs
@@ -57,7 +57,7 @@
           .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
           .then(function (t) {
             t = (t || "").trim();
-            if (/^https:\/\/[a-z0-9\-]+\.serveousercontent\.com\/?$/.test(t)) a.href = t;
+            if (/^https:\/\/[a-z0-9\-]+\.(serveousercontent\.com|loca\.lt)\/?$/.test(t)) a.href = t;
           })
           .catch(function () {});
       }
