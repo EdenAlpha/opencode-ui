@@ -32,9 +32,10 @@
       <button id="save" class="big">Save</button>
     </div>
     <p><a id="manual" class="big" href="https://opencode.tail142276.ts.net">Open OpenCode</a></p>
-    <p class="muted">If the button does nothing for 10 seconds, tap it again.
-    This address asks for nothing extra &mdash; no IP, no warnings. Your saved
-    password signs you in automatically.</p>
+    <p class="muted">Open this page in your real browser app (Chrome/Safari), not inside
+    a chat app's preview &mdash; the sign-in only sticks in a real browser.<br />
+    If the button does nothing for 10 seconds, tap it again.<br />
+    <a id="plain" href="https://opencode.tail142276.ts.net" style="color:#8a919a">Skip: open without automatic sign-in</a></p>
   </div>
   <script>
     // Permanent bookmark. The live tunnel address changes on restart, so this
@@ -46,6 +47,7 @@
       var statusEl = document.getElementById("status");
       var targetEl = document.getElementById("target");
       var manual = document.getElementById("manual");
+      var plain = document.getElementById("plain");
       var pwbox = document.getElementById("pwbox");
       var pwInput = document.getElementById("pw");
       var saveBtn = document.getElementById("save");
@@ -66,14 +68,18 @@
       };
       var refresh = function (auto) {
         manual.href = entryUrl();
+        if (plain) plain.href = liveUrl;
         targetEl.textContent = liveUrl;
         if (!password()) {
+          // DO NOT send the user in without credentials: an unauthenticated
+          // app just shows endless "loading". Force the one-time setup first.
           pwbox.style.display = "";
-          statusEl.textContent = "Paste your password once, then tap Open OpenCode.";
-          if (auto) { /* stay: user must save first */ return; }
-        } else {
-          pwbox.style.display = "none";
+          statusEl.textContent = "One quick setup: paste your password below and tap Save.";
+          manual.textContent = "Save password first";
+          return;
         }
+        pwbox.style.display = "none";
+        manual.textContent = "Open OpenCode";
         if (auto) {
           statusEl.textContent = "Opening your OpenCode session\u2026";
           try { location.replace(manual.href); } catch (e) {}
@@ -91,7 +97,13 @@
         pwInput.value = "";
         refresh(true);
       });
-      manual.addEventListener("click", function () {
+      manual.addEventListener("click", function (ev) {
+        if (!password()) {
+          ev.preventDefault();
+          statusEl.textContent = "Paste your password above and tap Save first - otherwise the app cannot load your chats.";
+          try { pwInput.focus(); } catch (e) {}
+          return;
+        }
         manual.href = entryUrl();
         statusEl.textContent = "Opening\u2026 if nothing loads, wait 20 seconds and tap again.";
       });
