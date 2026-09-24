@@ -31,10 +31,10 @@
       <br />
       <button id="save" class="big">Save</button>
     </div>
-    <p><a id="manual" class="big" href="https://eden-opencode-oc.loca.lt">Open OpenCode</a></p>
+    <p><a id="manual" class="big" href="https://opencode.tail142276.ts.net">Open OpenCode</a></p>
     <p class="muted">If the button does nothing for 10 seconds, tap it again.
-    First visit? The next page may ask for an IP &mdash; enter
-    <b>34.226.211.195</b> once.</p>
+    This address asks for nothing extra &mdash; no IP, no warnings. Your saved
+    password signs you in automatically.</p>
   </div>
   <script>
     // Permanent bookmark. The live tunnel address changes on restart, so this
@@ -42,7 +42,7 @@
     // ONLY in this browser's own storage - it is never sent anywhere except
     // inside the tunnel's own login link, as a #fragment the server never sees.
     (function () {
-      var fallback = "https://eden-opencode-oc.loca.lt";
+      var fallback = "https://opencode.tail142276.ts.net";
       var statusEl = document.getElementById("status");
       var targetEl = document.getElementById("target");
       var manual = document.getElementById("manual");
@@ -51,7 +51,7 @@
       var saveBtn = document.getElementById("save");
       var liveUrl = fallback;
       var isTarget = function (s) {
-        return /^https:\/\/[a-z0-9\-]+\.(serveousercontent\.com|loca\.lt)\/?$/.test(s);
+        return /^https:\/\/[a-z0-9\-\.]+\.(serveousercontent\.com|loca\.lt|ts\.net)\/?$/.test(s);
       };
       var password = function () {
         try { return (localStorage.getItem("oc_pw") || "").trim(); } catch (e) { return ""; }
@@ -111,7 +111,7 @@
     })();
   </script>
   <noscript>
-    <p><a class="big" href="https://eden-opencode-oc.loca.lt">Open OpenCode (no JavaScript)</a></p>
+    <p><a class="big" href="https://opencode.tail142276.ts.net">Open OpenCode (no JavaScript)</a></p>
   </noscript>
 </body>
 </html>
